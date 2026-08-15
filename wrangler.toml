@@ -1,0 +1,18 @@
+name = "d-invites-ai"
+main = "ai-event-parser.js"
+compatibility_date = "2026-08-01"
+
+routes = [
+  { pattern = "api.invites.devtem.org/ai-parse-event", zone_name = "devtem.org" }
+]
+
+# Secrets (never commit real values):
+#   wrangler secret put GROQ_API_KEY
+#   wrangler secret put GEMINI_API_KEY
+#   wrangler secret put HF_API_TOKEN
+#   wrangler secret put SUPABASE_URL
+#   wrangler secret put SUPABASE_ANON_KEY
+#
+# This is a 4th worker alongside d-invites-api (payments) and d-invites-og
+# (crawler meta tags) — same api.invites.devtem.org host, different path,
+# so all three can share one route table if you prefer a single worker later.
