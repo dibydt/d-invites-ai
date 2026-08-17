@@ -73,6 +73,7 @@ Rules:
 - Never invent specific facts (no invented venue names, no invented dates). Leave fields empty/null instead.`;
 }
 
+
 async function tryGroq(description, systemPrompt, env) {
   if (!env.GROQ_API_KEY) throw new Error('GROQ_API_KEY secret is missing');
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -82,7 +83,9 @@ async function tryGroq(description, systemPrompt, env) {
       Authorization: `Bearer ${env.GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      // llama-3.3-70b-versatile was shut down 16 Aug 2026
+      model: 'openai/gpt-oss-20b', // fast + cheap, good enough for this task
+      // model: 'openai/gpt-oss-120b',     // stronger alternative if you prefer
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: description },
@@ -106,14 +109,17 @@ async function tryGroq(description, systemPrompt, env) {
 async function tryGemini(description, systemPrompt, env) {
   if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY secret is missing');
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${env.GEMINI_API_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: 'user', parts: [{ text: description }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.3 },
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.3,
+        },
       }),
     }
   );
@@ -130,6 +136,8 @@ async function tryGemini(description, systemPrompt, env) {
 
 async function tryHuggingFace(description, systemPrompt, env) {
   if (!env.HF_API_TOKEN) throw new Error('HF_API_TOKEN secret is missing');
+  // Old serverless endpoint for DeepSeek-V3 is unreliable (530/1016).
+  // Keeping it as last-resort only.
   const res = await fetch('https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-V3', {
     method: 'POST',
     headers: {
@@ -151,6 +159,7 @@ async function tryHuggingFace(description, systemPrompt, env) {
   if (!text) throw new Error('HuggingFace empty response');
   return extractJson(text);
 }
+
 
 export default {
   async fetch(request, env) {
